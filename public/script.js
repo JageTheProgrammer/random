@@ -49,7 +49,7 @@ function appendMessage(text, isMine = false) {
 }
 
 // NAME INPUT
-window.submitName = function () {
+function submitName() {
   const nameField = document.getElementById('nameInput');
   myName = nameField.value.trim() || 'Anonymous';
   myAvatar = avatars[Math.floor(Math.random() * avatars.length)];
@@ -62,7 +62,8 @@ window.submitName = function () {
   socket = io({ query: { name: myName } });
   initSocketEvents();
   Notification.requestPermission();
-};
+
+}
 
 function showNotification(msg) {
   if (Notification.permission === 'granted') {
