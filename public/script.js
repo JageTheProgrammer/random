@@ -140,6 +140,6 @@ function nextChat() {
 
 // PROFANITY FILTER
 function containsBadWords(text) {
-  const badWords = ['badword1', 'badword2', 'niga'];
+  const badWords = ['badword1', 'badword2', 'hell'];
   return badWords.some(word => text.toLowerCase().includes(word));
 }
