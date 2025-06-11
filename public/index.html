@@ -36,6 +36,19 @@
     margin-bottom: 10px;
     font-size: 1.8rem;
   }
+  #authPrompt {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  z-index: 20;
+  padding: 20px;
+  }
 
   #chat {
     background-color: var(--input-bg);
@@ -143,7 +156,14 @@
 <body>
 
   <h1>Random Chat</h1>
-  
+
+  <div id="authPrompt">
+  <h2>Login or Signup</h2>
+  <input type="text" id="authUsername" placeholder="Username" />
+  <input type="password" id="authPassword" placeholder="Password" />
+  <button onclick="login()">Login</button>
+  <button onclick="signup()">Sign Up</button>
+  </div>
 
   <div id="namePrompt">
     <p>Enter your name:</p>
