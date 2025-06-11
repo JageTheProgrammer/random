@@ -36,6 +36,7 @@ picker.on('emoji', emoji => {
 
 emojiBtn.addEventListener('click', () => picker.togglePicker(emojiBtn));
 
+
 // MESSAGES
 function appendMessage(text, isMine = false) {
   const msg = document.createElement('div');
