@@ -15,7 +15,7 @@ function generateNickname() {
   const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
   const animal = animals[Math.floor(Math.random() * animals.length)];
   const number = Math.floor(Math.random() * 100);
-  return ${adj}${animal}${number};
+  return `${adj}${animal}${number}`;
 }
 
 let waitingUser = null;
@@ -23,7 +23,7 @@ let waitingUser = null;
 io.on('connection', (socket) => {
   const customName = socket.handshake.query.name;
   socket.nickname = customName || generateNickname();
-  console.log(${socket.nickname} connected: ${socket.id});
+  console.log(`${socket.nickname} connected: ${socket.id}`);
 
   if (waitingUser && waitingUser !== socket) {
     socket.partner = waitingUser;
@@ -82,7 +82,7 @@ io.on('connection', (socket) => {
 
     if (waitingUser === socket) waitingUser = null;
 
-    console.log(${socket.nickname} disconnected);
+    console.log(`${socket.nickname} disconnected`);
   });
 });
 
