@@ -85,7 +85,7 @@ function initSocketEvents() {
   });
 
   socket.on('matched', (data) => {
-    status.textContent = You are now chatting with ${data.partner};
+    status.textContent = `You are now chatting with ${data.partner}`;
     chat.innerHTML = '';
   });
 
