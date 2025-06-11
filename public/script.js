@@ -40,7 +40,7 @@ emojiBtn.addEventListener('click', () => picker.togglePicker(emojiBtn));
 // MESSAGES
 function appendMessage(text, isMine = false) {
   const msg = document.createElement('div');
-  msg.textContent = isMine ? ${myAvatar} You: ${text} : ${text};
+  msg.textContent = isMine ? `${myAvatar} You: ${text}` : `${text}`;
   msg.style.margin = '5px 0';
   msg.style.textAlign = 'left';
   msg.style.color = isMine ? '#007bff' : '#ccc';
