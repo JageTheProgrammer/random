@@ -39,7 +39,7 @@ emojiBtn.addEventListener('click', () => picker.togglePicker(emojiBtn));
 // MESSAGES
 function appendMessage(text, isMine = false) {
   const msg = document.createElement('div');
-  msg.textContent = isMine ? `${myAvatar} You: ${text}` : `${text}`;
+  msg.textContent = isMine ? ${myAvatar} You: ${text} : ${text};
   msg.style.margin = '5px 0';
   msg.style.textAlign = 'left';
   msg.style.color = isMine ? '#007bff' : '#ccc';
@@ -84,15 +84,15 @@ function initSocketEvents() {
   });
 
   socket.on('matched', (data) => {
-    status.textContent = `You are now chatting with ${data.partner}`;
+    status.textContent = You are now chatting with ${data.partner};
     chat.innerHTML = '';
   });
 
   socket.on('message', (data) => {
-  appendMessage(`${data.from}: ${data.msg}`, false);
+  appendMessage(${data.from}: ${data.msg}, false);
   if (data.from !== myName) {
     pingSound.play().catch(e => console.warn('Sound error:', e));
-    showNotification(`${data.from}: ${data.msg}`);
+    showNotification(${data.from}: ${data.msg});
   }
   });
 
