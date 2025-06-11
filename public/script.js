@@ -8,6 +8,13 @@ const chat = document.getElementById('chat');
 const status = document.getElementById('status');
 const input = document.getElementById('msgInput');
 
+input.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') {
+    e.preventDefault(); // Prevent form submission or new line
+    sendMessage();
+  }
+});
+
 // THEME SETUP
 const savedTheme = localStorage.getItem('theme') || 'dark';
 document.body.classList.add(savedTheme);
