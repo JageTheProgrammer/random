@@ -10,7 +10,7 @@ const input = document.getElementById('msgInput');
 
 input.addEventListener('keydown', function (e) {
   if (e.key === 'Enter') {
-    e.preventDefault(); // Prevent form submission or new line
+    e.preventDefault();
     sendMessage();
   }
 });
@@ -36,7 +36,6 @@ picker.on('emoji', emoji => {
 
 emojiBtn.addEventListener('click', () => picker.togglePicker(emojiBtn));
 
-
 // MESSAGES
 function appendMessage(text, isMine = false) {
   const msg = document.createElement('div');
@@ -50,7 +49,7 @@ function appendMessage(text, isMine = false) {
 }
 
 // NAME INPUT
-function submitName() {
+window.submitName = function () {
   const nameField = document.getElementById('nameInput');
   myName = nameField.value.trim() || 'Anonymous';
   myAvatar = avatars[Math.floor(Math.random() * avatars.length)];
@@ -63,8 +62,7 @@ function submitName() {
   socket = io({ query: { name: myName } });
   initSocketEvents();
   Notification.requestPermission();
-
-}
+};
 
 function showNotification(msg) {
   if (Notification.permission === 'granted') {
@@ -90,11 +88,11 @@ function initSocketEvents() {
   });
 
   socket.on('message', (data) => {
-  appendMessage(${data.from}: ${data.msg}, false);
-  if (data.from !== myName) {
-    pingSound.play().catch(e => console.warn('Sound error:', e));
-    showNotification(${data.from}: ${data.msg});
-  }
+    appendMessage(`${data.from}: ${data.msg}`, false);
+    if (data.from !== myName) {
+      pingSound.play().catch(e => console.warn('Sound error:', e));
+      showNotification(`${data.from}: ${data.msg}`);
+    }
   });
 
   socket.on('partner_left', () => {
@@ -141,6 +139,6 @@ function nextChat() {
 
 // PROFANITY FILTER
 function containsBadWords(text) {
-  const badWords = ['badword1', 'badword2', 'hell'];
+  const badWords = ['badword1', 'badword2', 'niga'];
   return badWords.some(word => text.toLowerCase().includes(word));
 }
