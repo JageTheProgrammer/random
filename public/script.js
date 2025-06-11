@@ -48,6 +48,45 @@ function appendMessage(text, isMine = false) {
   chat.scrollTop = chat.scrollHeight;
 }
 
+async function login() {
+  const username = document.getElementById("authUsername").value;
+  const password = document.getElementById("authPassword").value;
+
+  const res = await fetch('/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json();
+  if (res.ok) {
+    localStorage.setItem('token', data.token);
+    document.getElementById("authPrompt").style.display = 'none';
+    document.getElementById("namePrompt").style.display = 'flex';
+    document.getElementById("nameInput").value = username;
+  } else {
+    alert(data.error);
+  }
+}
+
+async function signup() {
+  const username = document.getElementById("authUsername").value;
+  const password = document.getElementById("authPassword").value;
+
+  const res = await fetch('/register', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ username, password })
+  });
+
+  const data = await res.json();
+  if (res.ok) {
+    alert('Signup successful! Please log in.');
+  } else {
+    alert(data.error);
+  }
+}
+
 // NAME INPUT
 function submitName() {
   const nameField = document.getElementById('nameInput');
