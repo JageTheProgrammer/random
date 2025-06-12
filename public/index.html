@@ -204,10 +204,7 @@
   <div id="status">Connecting...</div>
   <div id="chat"></div>
 
-  <div id="videoContainer">
-  <video id="localVideo" autoplay muted playsinline></video>
-  <video id="remoteVideo" autoplay playsinline></video>
-</div>
+  
 
 
 
@@ -215,6 +212,10 @@
   <button onclick="sendMessage()" disabled>Send</button>
   <button onclick="nextChat()" disabled>Next</button>
   <button id="videoChatBtn" disabled>Start Video Chat</button>
+ <div id="videoContainer">
+  <video id="localVideo" autoplay muted playsinline></video>
+  <video id="remoteVideo" autoplay playsinline></video>
+</div>
   <audio id="pingSound" src="ping.mp3" preload="auto"></audio>
 
   <!-- ✅ Add this just before </body> -->
