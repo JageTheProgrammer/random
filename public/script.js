@@ -143,3 +143,72 @@ function containsBadWords(text) {
   const badWords = ['badword1', 'badword2', 'niga'];
   return badWords.some(word => text.toLowerCase().includes(word));
 }
+
+let localStream;
+let peerConnection;
+const config = {
+  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+};
+
+function toggleVideoChat() {
+  document.getElementById('video-chat').style.display = 'flex';
+  startVideoChat();
+}
+
+async function startVideoChat() {
+  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  document.getElementById('localVideo').srcObject = localStream;
+
+  peerConnection = new RTCPeerConnection(config);
+  localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+  peerConnection.ontrack = ({ streams: [stream] }) => {
+    document.getElementById('remoteVideo').srcObject = stream;
+  };
+
+  peerConnection.onicecandidate = ({ candidate }) => {
+    if (candidate) {
+      socket.emit('webrtc-candidate', candidate);
+    }
+  };
+
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+  socket.emit('webrtc-offer', offer);
+}
+
+// Handle offer, answer, ICE candidates
+socket.on('webrtc-offer', async (offer) => {
+  peerConnection = new RTCPeerConnection(config);
+  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  document.getElementById('localVideo').srcObject = localStream;
+  localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+  peerConnection.ontrack = ({ streams: [stream] }) => {
+    document.getElementById('remoteVideo').srcObject = stream;
+  };
+
+  peerConnection.onicecandidate = ({ candidate }) => {
+    if (candidate) {
+      socket.emit('webrtc-candidate', candidate);
+    }
+  };
+
+  await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await peerConnection.createAnswer();
+  await peerConnection.setLocalDescription(answer);
+  socket.emit('webrtc-answer', answer);
+});
+
+socket.on('webrtc-answer', async (answer) => {
+  await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+});
+
+socket.on('webrtc-candidate', async (candidate) => {
+  try {
+    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+  } catch (e) {
+    console.warn('ICE candidate error:', e);
+  }
+});
+
