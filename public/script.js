@@ -177,38 +177,75 @@ async function startVideoChat() {
   socket.emit('webrtc-offer', offer);
 }
 
-// Handle offer, answer, ICE candidates
-socket.on('webrtc-offer', async (offer) => {
-  peerConnection = new RTCPeerConnection(config);
-  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-  document.getElementById('localVideo').srcObject = localStream;
-  localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+function initSocketEvents() {
+  socket.on('waiting', () => {
+    status.textContent = 'Waiting for someone to chat with...';
+  });
 
-  peerConnection.ontrack = ({ streams: [stream] }) => {
-    document.getElementById('remoteVideo').srcObject = stream;
-  };
+  socket.on('matched', (data) => {
+    status.textContent = `You are now chatting with ${data.partner}`;
+    chat.innerHTML = '';
+  });
 
-  peerConnection.onicecandidate = ({ candidate }) => {
-    if (candidate) {
-      socket.emit('webrtc-candidate', candidate);
+  socket.on('message', (data) => {
+    appendMessage(`${data.from}: ${data.msg}`, false);
+    if (data.from !== myName) {
+      pingSound.play().catch(e => console.warn('Sound error:', e));
+      showNotification(`${data.from}: ${data.msg}`);
     }
-  };
+  });
 
-  await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-  const answer = await peerConnection.createAnswer();
-  await peerConnection.setLocalDescription(answer);
-  socket.emit('webrtc-answer', answer);
-});
+  socket.on('partner_left', () => {
+    status.textContent = 'Stranger disconnected.';
+  });
 
-socket.on('webrtc-answer', async (answer) => {
-  await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-});
+  socket.on('typing', () => {
+    status.textContent = 'Stranger is typing...';
+  });
 
-socket.on('webrtc-candidate', async (candidate) => {
-  try {
-    await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-  } catch (e) {
-    console.warn('ICE candidate error:', e);
-  }
-});
+  socket.on('stop_typing', () => {
+    status.textContent = 'You are now chatting.';
+  });
+
+  input.addEventListener('input', () => {
+    if (input.value) {
+      socket.emit('typing');
+    } else {
+      socket.emit('stop_typing');
+    }
+  });
+
+  // Put WebRTC event handlers here:
+  socket.on('webrtc-offer', async (offer) => {
+    peerConnection = new RTCPeerConnection(config);
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    document.getElementById('localVideo').srcObject = localStream;
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+    peerConnection.ontrack = ({ streams: [stream] }) => {
+      document.getElementById('remoteVideo').srcObject = stream;
+    };
+
+    peerConnection.onicecandidate = ({ candidate }) => {
+      if (candidate) socket.emit('webrtc-candidate', candidate);
+    };
+
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
+    socket.emit('webrtc-answer', answer);
+  });
+
+  socket.on('webrtc-answer', async (answer) => {
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+  });
+
+  socket.on('webrtc-candidate', async (candidate) => {
+    try {
+      await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    } catch (e) {
+      console.warn('ICE candidate error:', e);
+    }
+  });
+}
 
