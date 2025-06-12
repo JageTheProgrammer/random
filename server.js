@@ -1,10 +1,10 @@
 const express = require('express');
 const http = require('http');
-const { Server } = require('socket.io'); // This creates the 'io' object
+const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server); // 💡 This defines 'io'
+const io = new Server(server);
 
 app.use(express.static('public'));
 
@@ -25,6 +25,7 @@ io.on('connection', (socket) => {
   socket.nickname = customName || generateNickname();
   console.log(`${socket.nickname} connected: ${socket.id}`);
 
+  // Match with waiting user if exists
   if (waitingUser && waitingUser !== socket) {
     socket.partner = waitingUser;
     waitingUser.partner = socket;
@@ -38,6 +39,7 @@ io.on('connection', (socket) => {
     socket.emit('waiting');
   }
 
+  // Handle typing indicators
   socket.on('typing', () => {
     if (socket.partner) socket.partner.emit('typing');
   });
@@ -46,12 +48,14 @@ io.on('connection', (socket) => {
     if (socket.partner) socket.partner.emit('stop_typing');
   });
 
+  // Handle messages
   socket.on('message', (msg) => {
     if (socket.partner) {
       socket.partner.emit('message', { from: socket.nickname, msg });
     }
   });
 
+  // Handle next chat request
   socket.on('next', () => {
     if (socket.partner) {
       socket.partner.emit('partner_left');
@@ -74,6 +78,26 @@ io.on('connection', (socket) => {
     }
   });
 
+  // 🔌 WebRTC Signaling Events
+  socket.on('webrtc-offer', (offer) => {
+    if (socket.partner) {
+      socket.partner.emit('webrtc-offer', offer);
+    }
+  });
+
+  socket.on('webrtc-answer', (answer) => {
+    if (socket.partner) {
+      socket.partner.emit('webrtc-answer', answer);
+    }
+  });
+
+  socket.on('webrtc-candidate', (candidate) => {
+    if (socket.partner) {
+      socket.partner.emit('webrtc-candidate', candidate);
+    }
+  });
+
+  // Handle disconnect
   socket.on('disconnect', () => {
     if (socket.partner) {
       socket.partner.emit('partner_left');
