@@ -59,10 +59,13 @@ function submitName() {
   document.querySelector('button[onclick="sendMessage()"]').disabled = false;
   document.querySelector('button[onclick="nextChat()"]').disabled = false;
 
+  // Enable video chat button only after name is submitted
+  const videoChatBtn = document.getElementById('videoChatBtn');
+  videoChatBtn.disabled = false;
+
   socket = io({ query: { name: myName } });
   initSocketEvents();
   Notification.requestPermission();
-
 }
 
 function showNotification(msg) {
@@ -77,44 +80,10 @@ function showNotification(msg) {
   }
 }
 
-// SOCKET EVENTS
-function initSocketEvents() {
-  socket.on('waiting', () => {
-    status.textContent = 'Waiting for someone to chat with...';
-  });
-
-  socket.on('matched', (data) => {
-    status.textContent = `You are now chatting with ${data.partner}`;
-    chat.innerHTML = '';
-  });
-
-  socket.on('message', (data) => {
-    appendMessage(`${data.from}: ${data.msg}`, false);
-    if (data.from !== myName) {
-      pingSound.play().catch(e => console.warn('Sound error:', e));
-      showNotification(`${data.from}: ${data.msg}`);
-    }
-  });
-
-  socket.on('partner_left', () => {
-    status.textContent = 'Stranger disconnected.';
-  });
-
-  socket.on('typing', () => {
-    status.textContent = 'Stranger is typing...';
-  });
-
-  socket.on('stop_typing', () => {
-    status.textContent = 'You are now chatting.';
-  });
-
-  input.addEventListener('input', () => {
-    if (input.value) {
-      socket.emit('typing');
-    } else {
-      socket.emit('stop_typing');
-    }
-  });
+// PROFANITY FILTER
+function containsBadWords(text) {
+  const badWords = ['badword1', 'badword2', 'niga'];
+  return badWords.some(word => text.toLowerCase().includes(word));
 }
 
 // SEND MESSAGE
@@ -138,12 +107,6 @@ function nextChat() {
   socket.emit('next');
 }
 
-// PROFANITY FILTER
-function containsBadWords(text) {
-  const badWords = ['badword1', 'badword2', 'niga'];
-  return badWords.some(word => text.toLowerCase().includes(word));
-}
-
 let localStream;
 let peerConnection;
 const config = {
@@ -156,25 +119,29 @@ function toggleVideoChat() {
 }
 
 async function startVideoChat() {
-  localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-  document.getElementById('localVideo').srcObject = localStream;
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    document.getElementById('localVideo').srcObject = localStream;
 
-  peerConnection = new RTCPeerConnection(config);
-  localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+    peerConnection = new RTCPeerConnection(config);
+    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
-  peerConnection.ontrack = ({ streams: [stream] }) => {
-    document.getElementById('remoteVideo').srcObject = stream;
-  };
+    peerConnection.ontrack = ({ streams: [stream] }) => {
+      document.getElementById('remoteVideo').srcObject = stream;
+    };
 
-  peerConnection.onicecandidate = ({ candidate }) => {
-    if (candidate) {
-      socket.emit('webrtc-candidate', candidate);
-    }
-  };
+    peerConnection.onicecandidate = ({ candidate }) => {
+      if (candidate) {
+        socket.emit('webrtc-candidate', candidate);
+      }
+    };
 
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
-  socket.emit('webrtc-offer', offer);
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    socket.emit('webrtc-offer', offer);
+  } catch (err) {
+    console.error('Error starting video chat:', err);
+  }
 }
 
 function initSocketEvents() {
@@ -215,29 +182,37 @@ function initSocketEvents() {
     }
   });
 
-  // Put WebRTC event handlers here:
+  // WebRTC signaling handlers
   socket.on('webrtc-offer', async (offer) => {
-    peerConnection = new RTCPeerConnection(config);
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    document.getElementById('localVideo').srcObject = localStream;
-    localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+    try {
+      peerConnection = new RTCPeerConnection(config);
+      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      document.getElementById('localVideo').srcObject = localStream;
+      localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
-    peerConnection.ontrack = ({ streams: [stream] }) => {
-      document.getElementById('remoteVideo').srcObject = stream;
-    };
+      peerConnection.ontrack = ({ streams: [stream] }) => {
+        document.getElementById('remoteVideo').srcObject = stream;
+      };
 
-    peerConnection.onicecandidate = ({ candidate }) => {
-      if (candidate) socket.emit('webrtc-candidate', candidate);
-    };
+      peerConnection.onicecandidate = ({ candidate }) => {
+        if (candidate) socket.emit('webrtc-candidate', candidate);
+      };
 
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(answer);
-    socket.emit('webrtc-answer', answer);
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+      const answer = await peerConnection.createAnswer();
+      await peerConnection.setLocalDescription(answer);
+      socket.emit('webrtc-answer', answer);
+    } catch (e) {
+      console.error('Error handling webrtc-offer:', e);
+    }
   });
 
   socket.on('webrtc-answer', async (answer) => {
-    await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    try {
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    } catch (e) {
+      console.error('Error handling webrtc-answer:', e);
+    }
   });
 
   socket.on('webrtc-candidate', async (candidate) => {
@@ -249,3 +224,7 @@ function initSocketEvents() {
   });
 }
 
+// Add event listener for the video chat button
+document.getElementById('videoChatBtn').addEventListener('click', () => {
+  toggleVideoChat();
+});
